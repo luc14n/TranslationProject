@@ -8,7 +8,7 @@ class analytics:
 
         # Melt the data to make it suitable for Seaborn
         melted_data = data.melt(
-            id_vars=['Filename', 'Model', 'Final Language', 'Translation Count'],
+            id_vars=['Filename', 'Model', 'Final Language', 'Last Language', 'Translation Count'],
             value_vars=['BLEU', 'METEOR', 'ROUGE'],
             var_name='Metric',
             value_name='Score'
@@ -26,7 +26,8 @@ class analytics:
 
         # Melt the data to make it suitable for Seaborn
         melted_data = data.melt(
-            id_vars=['Filename1', 'Model1', 'Translation Count1', 'Filename2', 'Model2', 'Translation Count2', 'Final Language'],
+            id_vars=['Filename1', 'Model1', 'Translation Count1', 'Last Language1',
+                     'Filename2', 'Model2', 'Translation Count2', 'Last Language2', 'Final Language'],
             value_vars=['BLEU', 'METEOR', 'ROUGE'],
             var_name='Metric',
             value_name='Score'
@@ -46,7 +47,8 @@ class analytics:
 
         # Melt the data to make it suitable for Seaborn
         melted_data = subset.melt(
-            id_vars=['Filename1', 'Model1', 'Translation Count1', 'Filename2', 'Model2', 'Translation Count2', 'Final Language'],
+            id_vars=['Filename1', 'Model1', 'Translation Count1', 'Last Language1',
+                     'Filename2', 'Model2', 'Translation Count2', 'Last Language2', 'Final Language'],
             value_vars=['BLEU', 'METEOR', 'ROUGE'],
             var_name='Metric',
             value_name='Score'

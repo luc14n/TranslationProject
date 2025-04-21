@@ -26,8 +26,8 @@ intermediate_languages = ["arabic", "french", "mandarin"]
 
 # Translations are finished
 comparator = compareable('originals', 'translations', 'comparison.csv')
-# comparator.compare()
-# comparator.selfComparison()
+comparator.compare()
+comparator.selfComparison()
 
 
 # Translations are finished
@@ -40,17 +40,48 @@ for var in comparison_vars:
     plt.figure(figsize=(12, 8))
     analysis.compareisonBoxPlots(var, plt.gca())  # Use the current axis
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'graphs/comparison_{var}.png')  # Save the plot
+    plt.close()
 
 # Generate self-comparison plots
 for var in self_comparison_vars:
     plt.figure(figsize=(12, 8))
     analysis.ComparisonSelfBoxPlots(var, plt.gca())  # Use the current axis
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'graphs/self_comparison_{var}.png')  # Save the plot
+    plt.close()
+
+for model in ['gpt-3.5-turbo', 'gpt-4-turbo', 'deepseek-chat', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash']:
+    plt.figure(figsize=(12, 8))
+    analysis.ComparisonSelfModel1BoxPlots('Model1', plt.gca(), model)  # Use the current axis
+    plt.tight_layout()
+    plt.savefig(f'graphs/self_comparison_Model1_{model}.png')  # Save the plot
+    plt.close()
 
 for model in ['gpt-3.5-turbo', 'gpt-4-turbo', 'deepseek-chat', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash']:
     plt.figure(figsize=(12, 8))
     analysis.ComparisonSelfModel1BoxPlots('Model2', plt.gca(), model)  # Use the current axis
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'graphs/self_comparison_Model2_{model}.png')  # Save the plot
+    plt.close()
+
+for model in ['gpt-3.5-turbo', 'gpt-4-turbo', 'deepseek-chat', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash']:
+    plt.figure(figsize=(12, 8))
+    analysis.ComparisonSelfModel1BoxPlots('Final Language', plt.gca(), model)  # Use the current axis
+    plt.tight_layout()
+    plt.savefig(f'graphs/self_comparison_Final_Language_{model}.png')  # Save the plot
+    plt.close()
+
+for model in ['gpt-3.5-turbo', 'gpt-4-turbo', 'deepseek-chat', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash']:
+    plt.figure(figsize=(12, 8))
+    analysis.ComparisonSelfModel1BoxPlots('Last Language1', plt.gca(), model)  # Use the current axis
+    plt.tight_layout()
+    plt.savefig(f'graphs/self_comparison_Last_Language1_{model}.png')  # Save the plot
+    plt.close()
+
+for model in ['gpt-3.5-turbo', 'gpt-4-turbo', 'deepseek-chat', 'claude-3-7-sonnet-20250219', 'gemini-2.0-flash']:
+    plt.figure(figsize=(12, 8))
+    analysis.ComparisonSelfModel1BoxPlots('Last Language2', plt.gca(), model)  # Use the current axis
+    plt.tight_layout()
+    plt.savefig(f'graphs/self_comparison_Last_Language2_{model}.png')  # Save the plot
+    plt.close()

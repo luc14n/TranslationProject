@@ -34,14 +34,14 @@ class compareable:
         with open(self.output_csv, mode='w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file)
             # Write the header row
-            writer.writerow(["Filename", "Model", "Translation Count", "Final Language", "BLEU", "METEOR", "ROUGE"])
+            writer.writerow(["Filename", "Model", "Translation Count", "Final Language", "Last Language", "BLEU", "METEOR", "ROUGE"])
 
             # Iterate through all translation files in the directory
             for filename in os.listdir(self.translations_path):
                 if filename.endswith('.txt'):
                     # Parse metadata from the filename
-                    model, translation_count, final_language = self._parse_metadata(filename)
-                    print([filename, model, translation_count, final_language])
+                    model, translation_count, final_language, last_language = self._parse_metadata(filename)
+                    print([filename, model, translation_count, final_language, last_language])
 
                     # Load the appropriate original poem
                     original_poem = self._get_original_poem(final_language)
@@ -56,8 +56,8 @@ class compareable:
                     rouge = self.ROUGE(original_poem, translation)
 
                     # Write the results to the CSV file
-                    writer.writerow([filename, model, translation_count, final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
-                    print([filename, model, translation_count, final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
+                    writer.writerow([filename, model, translation_count, final_language, last_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
+                    print([filename, model, translation_count, final_language, last_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
 
     def _parse_metadata(self, filename):
         # Remove the file extension while preserving the last word
@@ -78,7 +78,10 @@ class compareable:
         # Extract the final language (last part of the languages list)
         final_language = languages[-1]
 
-        return model, translation_count, final_language
+        # Extract the second-to-last language
+        last_language = languages[-2] if len(languages) > 1 else None
+
+        return model, translation_count, final_language, last_language
 
     def BLEU(self, original_poem, translation):
         # Calculate BLEU score with smoothing
@@ -108,23 +111,23 @@ class compareable:
         with open(output_csv, mode='w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file)
             # Write the header row
-            writer.writerow(["Filename1", "Model1", "Translation Count1",
-                             "Filename2", "Model2", "Translation Count2",
+            writer.writerow(["Filename1", "Model1", "Translation Count1", "Last Language1",
+                             "Filename2", "Model2", "Translation Count2", "Last Language2",
                              "Final Language", "BLEU", "METEOR", "ROUGE"])
 
             # Group files by final language
             translations_by_language = {}
             for filename in os.listdir(self.translations_path):
                 if filename.endswith('.txt'):
-                    _, _, final_language = self._parse_metadata(filename)
-                    translations_by_language.setdefault(final_language, []).append(filename)
+                    _, _, final_language, last_language = self._parse_metadata(filename)
+                    translations_by_language.setdefault(final_language, []).append((filename, last_language))
 
             # Compare each pair of translations within the same final language
             for final_language, files in translations_by_language.items():
-                for file1, file2 in itertools.combinations(files, 2):
+                for (file1, last_language1), (file2, last_language2) in itertools.combinations(files, 2):
                     # Parse metadata for both files
-                    model1, count1, _ = self._parse_metadata(file1)
-                    model2, count2, _ = self._parse_metadata(file2)
+                    model1, count1, _, _ = self._parse_metadata(file1)
+                    model2, count2, _, _ = self._parse_metadata(file2)
 
                     # Load the translations
                     translation1 = self._load_file(os.path.join(self.translations_path, file1))
@@ -136,7 +139,9 @@ class compareable:
                     rouge = self.ROUGE(translation1, translation2)
 
                     # Write the results to the CSV file
-                    writer.writerow([file1, model1, count1, file2, model2, count2,
+                    writer.writerow([file1, model1, count1, last_language1,
+                                     file2, model2, count2, last_language2,
                                      final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
-                    print([file1, model1, count1, file2, model2, count2,
+                    print([file1, model1, count1, last_language1,
+                           file2, model2, count2, last_language2,
                            final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
