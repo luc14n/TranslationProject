@@ -4,6 +4,7 @@ import itertools
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from nltk.translate.meteor_score import meteor_score
 from rouge_score import rouge_scorer
+from multiprocessing import Pool
 
 class compareable:
     def __init__(self, originals_path, translations_path, output_csv):
@@ -28,36 +29,47 @@ class compareable:
             raise FileNotFoundError(f"Original poem for language '{final_language}' not found: {original_file}")
         return self._load_file(original_file)
 
+    from multiprocessing import Pool
+
     def compare(self):
         print("Comparing translations...")
+
         # Prepare the CSV file
         with open(self.output_csv, mode='w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file)
             # Write the header row
             writer.writerow(["Filename", "Model", "Translation Count", "Final Language", "Last Language", "BLEU", "METEOR", "ROUGE"])
 
-            # Iterate through all translation files in the directory
-            for filename in os.listdir(self.translations_path):
-                if filename.endswith('.txt'):
-                    # Parse metadata from the filename
-                    model, translation_count, final_language, last_language = self._parse_metadata(filename)
-                    print([filename, model, translation_count, final_language, last_language])
+            # Use multiprocessing Pool for parallel processing
+            with Pool() as pool:
+                # Prepare arguments for each file
+                args = [(filename, self.output_csv) for filename in os.listdir(self.translations_path) if filename.endswith('.txt')]
 
-                    # Load the appropriate original poem
-                    original_poem = self._get_original_poem(final_language)
+                # Process files in parallel
+                results = pool.starmap(self._process_file_multiprocessing, args)
 
-                    # Load the translation
-                    translation_path = os.path.join(self.translations_path, filename)
-                    translation = self._load_file(translation_path)
+                # Write results to the CSV file
+                for result in results:
+                    writer.writerow(result)
 
-                    # Calculate metrics
-                    bleu = self.BLEU(original_poem, translation)
-                    meteor = self.METEOR(original_poem, translation)
-                    rouge = self.ROUGE(original_poem, translation)
+    def _process_file_multiprocessing(self, filename, output_csv):
+        # Parse metadata from the filename
+        model, translation_count, final_language, last_language = self._parse_metadata(filename)
 
-                    # Write the results to the CSV file
-                    writer.writerow([filename, model, translation_count, final_language, last_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
-                    print([filename, model, translation_count, final_language, last_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
+        # Load the appropriate original poem
+        original_poem = self._get_original_poem(final_language)
+
+        # Load the translation
+        translation_path = os.path.join(self.translations_path, filename)
+        translation = self._load_file(translation_path)
+
+        # Calculate metrics
+        bleu = self.BLEU(original_poem, translation)
+        meteor = self.METEOR(original_poem, translation)
+        rouge = self.ROUGE(original_poem, translation)
+
+        # Return the result as a row for the CSV
+        return [filename, model, translation_count, final_language, last_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"]
 
     def _parse_metadata(self, filename):
         # Remove the file extension while preserving the last word
@@ -106,8 +118,10 @@ class compareable:
 
     def selfComparison(self):
         print("Performing self-comparison...")
+
         # Prepare the CSV file for self-comparison results
         output_csv = self.output_csv.replace(".csv", "_self_comparison.csv")
+
         with open(output_csv, mode='w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file)
             # Write the header row
@@ -122,26 +136,36 @@ class compareable:
                     _, _, final_language, last_language = self._parse_metadata(filename)
                     translations_by_language.setdefault(final_language, []).append((filename, last_language))
 
-            # Compare each pair of translations within the same final language
-            for final_language, files in translations_by_language.items():
-                for (file1, last_language1), (file2, last_language2) in itertools.combinations(files, 2):
-                    # Parse metadata for both files
-                    model1, count1, _, _ = self._parse_metadata(file1)
-                    model2, count2, _, _ = self._parse_metadata(file2)
+            # Use multiprocessing Pool for parallel processing
+            with Pool() as pool:
+                # Prepare arguments for each pair
+                args = []
+                for final_language, files in translations_by_language.items():
+                    for (file1, last_language1), (file2, last_language2) in itertools.combinations(files, 2):
+                        args.append((file1, last_language1, file2, last_language2, final_language))
 
-                    # Load the translations
-                    translation1 = self._load_file(os.path.join(self.translations_path, file1))
-                    translation2 = self._load_file(os.path.join(self.translations_path, file2))
+                # Process pairs in parallel
+                results = pool.starmap(self._process_pair_multiprocessing, args)
 
-                    # Calculate metrics
-                    bleu = self.BLEU(translation1, translation2)
-                    meteor = self.METEOR(translation1, translation2)
-                    rouge = self.ROUGE(translation1, translation2)
+                # Write results to the CSV file
+                for result in results:
+                    writer.writerow(result)
 
-                    # Write the results to the CSV file
-                    writer.writerow([file1, model1, count1, last_language1,
-                                     file2, model2, count2, last_language2,
-                                     final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
-                    print([file1, model1, count1, last_language1,
-                           file2, model2, count2, last_language2,
-                           final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"])
+    def _process_pair_multiprocessing(self, file1, last_language1, file2, last_language2, final_language):
+        # Parse metadata for both files
+        model1, count1, _, _ = self._parse_metadata(file1)
+        model2, count2, _, _ = self._parse_metadata(file2)
+
+        # Load the translations
+        translation1 = self._load_file(os.path.join(self.translations_path, file1))
+        translation2 = self._load_file(os.path.join(self.translations_path, file2))
+
+        # Calculate metrics
+        bleu = self.BLEU(translation1, translation2)
+        meteor = self.METEOR(translation1, translation2)
+        rouge = self.ROUGE(translation1, translation2)
+
+        # Return the result as a row for the CSV
+        return [file1, model1, count1, last_language1,
+                file2, model2, count2, last_language2,
+                final_language, f"{bleu:.4f}", f"{meteor:.4f}", f"{rouge:.4f}"]
