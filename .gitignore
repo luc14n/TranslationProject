@@ -6,10 +6,9 @@
 /translations 2.zip
 /translationsv1.2.zip
 
-/testTranslations
-/OldTranslations
-/translations
-/oldgraphs
+/testTranslations/
+/OldTranslations/
+/translations/
+/oldgraphs/
+/Comparison-Data/
 
-/comparison.csv
-/comparison_self_comparison.csv

@@ -33,7 +33,7 @@ if __name__ == '__main__':
     #                future.result()
 
     # Translations are finished
-    #comparator = compareable('originals', 'translations', 'comparison.csv')
+    #comparator = compareable('originals', 'translations', 'Comparison-Data/comparison.csv')
     #comparator.compare()
     #comparator.selfComparison()
 
