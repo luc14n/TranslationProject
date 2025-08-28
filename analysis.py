@@ -6,8 +6,8 @@ import pandas as pd
 class analytics:
     def __init__(self):
         # Load the data from the CSV files and store them as instance variables
-        self.comparison_data = pd.read_csv('comparison.csv')
-        self.self_comparison_data = pd.read_csv('comparison_self_comparison.csv')
+        self.comparison_data = pd.read_csv('Comparison-Data/comparison.csv')
+        self.self_comparison_data = pd.read_csv('Comparison-Data/comparison_self_comparison.csv')
 
     def plot_filtered_boxplot(self, model=None, translation_count=None, final_language=None, last_language=None, x_axis=None, metrics=None, output_path=None):
         """
